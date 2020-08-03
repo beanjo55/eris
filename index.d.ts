@@ -1741,7 +1741,7 @@ declare namespace Eris {
     edit(options: RoleOptions, reason?: string): Promise<Role>;
     editPosition(position: number): Promise<void>;
     delete(reason?: string): Promise<void>;
-    [key: string]: string | boolean | number | Permission;
+    [key: string]: any;
   }
 
   export class UnavailableGuild extends Base {
