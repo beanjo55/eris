@@ -850,6 +850,45 @@ declare namespace Eris {
     webhook_id: string;
   }
 
+  interface LatencyRef {
+    lastTimeOffsetCheck: number;
+    latency: number;
+    offset: number;
+    raw: number[];
+    timeOffset: number;
+    timeOffsets: number[];
+  }
+
+  class SequentialBucket {
+    latencyRef: LatencyRef;
+    limit: number;
+    processing: boolean;
+    remaining: number;
+    reset: number;
+    constructor(limit: number, latencyRef?: LatencyRef);
+    check(override?: boolean): void;
+    queue(func: Function, short?: boolean): void;
+  }
+
+  type RequestMethod = "GET" | "PATCH" | "DELETE" | "POST" | "PUT";
+
+  export class RequestHandler implements SimpleJSON {
+    agent: HTTPSAgent;
+    baseURL: string;
+    globalBlock: boolean;
+    latencyRef: LatencyRef;
+    ratelimits: { [route: string]: SequentialBucket };
+    readyQueue: (() => void)[];
+    requestTimeout: number;
+    userAgent: string;
+    constructor(client: Client, forceQueueing?: boolean);
+    globalUnblock(): void;
+    request(method: RequestMethod, url: string, auth?: boolean, body?: { [s: string]: any }, file?: MessageFile, _route?: string, short?: boolean): Promise<object>;
+    routefy(url: string, method: RequestMethod): string;
+    toString(): string;
+    toJSON(props?: string[]): JSONCache;
+  }
+
   export class Client extends EventEmitter {
     token?: string;
     gatewayURL?: string;
@@ -872,6 +911,7 @@ declare namespace Eris {
     userGuildSettings: { [s: string]: GuildSettings };
     userSettings: UserSettings;
     notes: { [s: string]: string };
+    requestHandler: RequestHandler;
     constructor(token: string, options?: ClientOptions);
     connect(): Promise<void>;
     getGateway(): Promise<{ url: string }>;
