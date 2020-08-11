@@ -742,6 +742,7 @@ declare namespace Eris {
     agent?: HTTPSAgent;
     reconnectAttempts?: number;
     reconnectDelay?: ReconnectDelayFunction;
+    requestTimeout?: number;
   }
 
 
