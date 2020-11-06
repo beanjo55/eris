@@ -447,10 +447,6 @@ declare namespace Eris {
     entries: GuildAuditLogEntry[];
     users: User[];
   }
-  interface Widget {
-    channel_id?: string;
-    enabled: boolean;
-  }
   interface GuildOptions {
     afkChannelID?: string;
     afkTimeout?: number;
@@ -1328,8 +1324,6 @@ declare namespace Eris {
     vanityURL: string | null;
     verificationLevel: number;
     voiceStates: Collection<VoiceState>;
-    widgetChannelID?: string | null;
-    widgetEnabled?: boolean | null;
     constructor(data: BaseData, client: Client);
     addMemberRole(memberID: string, roleID: string, reason?: string): Promise<void>;
     banMember(userID: string, deleteMessageDays?: number, reason?: string): Promise<void>;
@@ -1480,7 +1474,7 @@ declare namespace Eris {
   export class Invite extends Base {
     channel: InvitePartialChannel | Exclude<AnyGuildChannel, CategoryChannel>;
     code: string;
-    // @ts-expect-error: Property is only not null when invite metadata is supplied
+    // @ts-ignore Property is only not null when invite metadata is supplied
     createdAt: number | null;
     guild?: Guild;
     inviter?: User;
@@ -1637,17 +1631,10 @@ declare namespace Eris {
       after?: string
     ): Promise<User[]>;
     getMessages(limit?: number, before?: string, after?: string, around?: string): Promise<Message<PrivateChannel>[]>;
-    getPins(): Promise<Message<PrivateChannel>[]>;
     leave(): Promise<void>;
-    pinMessage(messageID: string): Promise<void>;
     /** @deprecated */
     removeMessageReaction(messageID: string, reaction: string, userID: string): Promise<void>;
     removeMessageReaction(messageID: string, reaction: string): Promise<void>;
-    ring(recipient: string[]): void;
-    sendTyping(): Promise<void>;
-    syncCall(): void;
-    unpinMessage(messageID: string): Promise<void>;
-    unsendMessage(messageID: string): Promise<void>;
   }
 
 
@@ -1718,7 +1705,7 @@ declare namespace Eris {
     editAFK(afk: boolean): void;
     editStatus(status?: Status, game?: ActivityPartial<BotActivityType>): void;
     editStatus(game?: ActivityPartial<BotActivityType>): void;
-    // @ts-expect-error: Method override
+    // @ts-ignore Method override
     emit(event: string, ...args: any[]): void;
     getGuildMembers(guildID: string, timeout: number): void;
     hardReset(): void;
