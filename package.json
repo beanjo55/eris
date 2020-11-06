@@ -11,6 +11,7 @@
       },
       "./index.js"
     ],
+    "./": "./",
     "./esm": "./esm.mjs"
   },
   "typings": "./index.d.ts",
@@ -44,7 +45,7 @@
     "ws": "^7.2.1"
   },
   "devDependencies": {
-    "@types/node": "^13.9.0",
+    "@types/node": "^13.13.30",
     "@typescript-eslint/eslint-plugin": "^2.14.0",
     "@typescript-eslint/parser": "^2.14.0",
     "eslint": "^6.8.0",
