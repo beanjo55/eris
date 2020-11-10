@@ -94,7 +94,7 @@ declare namespace Eris {
     lastPinTimestamp: number | null;
     rateLimitPerUser: number;
     topic: string | null;
-    createWebhook(options: { name: string; avatar: string }, reason?: string): Promise<Webhook>;
+    createWebhook(options: { name: string; avatar?: string | null }, reason?: string): Promise<Webhook>;
     deleteMessages(messageIDs: string[], reason?: string): Promise<void>;
     getWebhooks(): Promise<Webhook[]>;
     purge(limit: number, filter?: (message: Message<GuildTextable>) => boolean, before?: string, after?: string, reason?: string): Promise<number>;
@@ -185,7 +185,7 @@ declare namespace Eris {
     proxy_icon_url?: string;
   }
   interface EmbedAuthorOptions {
-    icon_url?: string;
+    icon_url?: string | null;
     name: string;
     url?: string;
   }
@@ -198,7 +198,7 @@ declare namespace Eris {
     proxy_icon_url?: string;
   }
   interface EmbedFooterOptions {
-    icon_url?: string;
+    icon_url?: string | null;
     text: string;
   }
   interface EmbedImage extends EmbedImageOptions {
@@ -207,7 +207,7 @@ declare namespace Eris {
     width?: number;
   }
   interface EmbedImageOptions {
-    url?: string;
+    url?: string | null;
   }
   interface EmbedOptions {
     author?: EmbedAuthorOptions;
@@ -252,6 +252,17 @@ declare namespace Eris {
     id: string | null;
     name: string;
     animated?: boolean;
+  }
+
+  export interface Sticker {
+    id: string;
+    name: string;
+    description: string;
+    pack_id: string;
+    asset: string;
+    preview_asset?: string;
+    format_type: number;
+    tags: string;
   }
 
   // Events
@@ -1111,7 +1122,7 @@ declare namespace Eris {
     ): Promise<Invite & InviteWithoutMetadata<null>>;
     createChannelWebhook(
       channelID: string,
-      options: { name: string; avatar: string },
+      options: { name: string; avatar?: string | null },
       reason?: string
     ): Promise<Webhook>;
     createGuildEmoji(guildID: string, options: EmojiOptions, reason?: string): Promise<Emoji>;
@@ -1235,6 +1246,12 @@ declare namespace Eris {
     searchGuildMembers(guildID: string, query: string, limit?: number): Promise<Member[]>;
     syncGuildIntegration(guildID: string, integrationID: string): Promise<void>;
     unbanGuildMember(guildID: string, userID: string, reason?: string): Promise<void>;
+    webhookDeleteMessage(webhookID: string, token: string, messageID: string): Promise<void>;
+    webhookEditMessage(
+      webhookID: string,
+      token: string,
+      options: MessageWebhookContent
+    ): Promise<Message<GuildTextableChannel>>;
     on: ClientEvents<this>;
     toString(): string;
   }
@@ -1510,6 +1527,8 @@ declare namespace Eris {
     user: User;
     username: string;
     voiceState: VoiceState;
+    friendlyName: string;
+    detailedName: string;
     constructor(data: BaseData, guild?: Guild, client?: Client);
     addRole(roleID: string, reason?: string): Promise<void>;
     ban(deleteMessageDays?: number, reason?: string): Promise<void>;
@@ -1518,7 +1537,7 @@ declare namespace Eris {
     removeRole(roleID: string, reason?: string): Promise<void>;
     unban(reason?: string): Promise<void>;
   }
-
+  interface MessageWebhookContent extends Pick<WebhookPayload, "content" | "embeds"> {}
   export class Message<T extends Textable = TextableChannel> extends Base {
     activity?: MessageActivity;
     application?: MessageApplication;
@@ -1541,9 +1560,9 @@ declare namespace Eris {
     mentions: User[];
     messageReference: MessageReference | null;
     pinned: boolean;
-    prefix?: string;
-    reactions: { [s: string]: unknown; count: number; me: boolean };
+    reactions: { [s: string]: { count: number; me: boolean } };
     roleMentions: string[];
+    stickers: Sticker[];
     timestamp: number;
     tts: boolean;
     type: number;
@@ -1561,6 +1580,8 @@ declare namespace Eris {
     removeReaction(reaction: string): Promise<void>;
     removeReactionEmoji(reaction: string): Promise<void>;
     removeReactions(): Promise<void>;
+    webhookDelete(token: string): Promise<void>;
+    webhookEdit(token: string, options: MessageWebhookContent): Promise<Message<T>>;
   }
 
   // News channel rate limit is always 0
@@ -1776,7 +1797,7 @@ declare namespace Eris {
     addMessageReaction(messageID: string, reaction: string): Promise<void>;
     createInvite(options?: CreateInviteOptions, reason?: string): Promise<Invite & InviteWithoutMetadata<null, TextChannel>>;
     createMessage(content: MessageContent, file?: MessageFile | MessageFile[]): Promise<Message<TextChannel>>;
-    createWebhook(options: { name: string; avatar: string }, reason?: string): Promise<Webhook>;
+    createWebhook(options: { name: string; avatar?: string | null }, reason?: string): Promise<Webhook>;
     deleteMessage(messageID: string, reason?: string): Promise<void>;
     deleteMessages(messageIDs: string[], reason?: string): Promise<void>;
     edit(options: Omit<EditChannelOptions, "icon" | "ownerID">, reason?: string): Promise<this>;
@@ -1822,6 +1843,8 @@ declare namespace Eris {
     staticAvatarURL: string;
     system: boolean;
     username: string;
+    friendlyName: string;
+    detailedName: string;
     constructor(data: BaseData, client: Client);
     dynamicAvatarURL(format?: ImageFormat, size?: number): string;
     getDMChannel(): Promise<PrivateChannel>;
