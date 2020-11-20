@@ -33,6 +33,7 @@ declare namespace Eris {
     content?: string;
     embed?: EmbedOptions;
     flags?: number;
+    messageReference?: MessageReferenceReply;
     tts?: boolean;
   };
   type ImageFormat = "jpg" | "jpeg" | "png" | "gif" | "webp";
@@ -576,6 +577,7 @@ declare namespace Eris {
     everyone?: boolean;
     roles?: boolean | string[];
     users?: boolean | string[];
+    replied_user?: boolean;
   }
   interface Attachment {
     filename: string;
@@ -599,9 +601,17 @@ declare namespace Eris {
     file: Buffer | string;
     name: string;
   }
-  interface MessageReference {
+  interface MessageReference extends MessageReferenceBase {
     channelID: string;
-    guildID: string;
+  }
+
+  interface MessageReferenceBase {
+    channelID?: string;
+    guildID?: string;
+    messageID?: string;
+  }
+
+  interface MessageReferenceReply extends MessageReferenceBase {
     messageID: string;
   }
 
@@ -851,6 +861,7 @@ declare namespace Eris {
       GUILD_DISCOVERY_REQUALIFIED: 15;
       GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING: 16;
       GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING: 17;
+      REPLY: 19;
       [key: string]: number;
     };
     Permissions: {
@@ -1561,6 +1572,7 @@ declare namespace Eris {
     messageReference: MessageReference | null;
     pinned: boolean;
     reactions: { [s: string]: { count: number; me: boolean } };
+    referencedMessage?: Message | null;
     roleMentions: string[];
     stickers: Sticker[];
     timestamp: number;
