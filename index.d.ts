@@ -45,7 +45,7 @@ declare namespace Eris {
 
   // Presence/Relationship
   type ActivityType = BotActivityType | 4;
-  type BotActivityType = 0 | 1 | 2 | 3;
+  type BotActivityType = 0 | 1 | 2 | 3 | 5;
   type FriendSuggestionReasons = { name: string; platform_type: string; type: number }[];
   type Status = "online" | "idle" | "dnd" | "offline";
 
@@ -117,9 +117,9 @@ declare namespace Eris {
   interface Textable {
     lastMessageID: string;
     messages: Collection<Message>;
+    addMessageReaction(messageID: string, reaction: string): Promise<void>;
     /** @deprecated */
     addMessageReaction(messageID: string, reaction: string, userID: string): Promise<void>;
-    addMessageReaction(messageID: string, reaction: string): Promise<void>;
     createMessage(content: MessageContent, file?: MessageFile | MessageFile[]): Promise<Message>;
     deleteMessage(messageID: string, reason?: string): Promise<void>;
     editMessage(messageID: string, content: MessageContent): Promise<Message>;
@@ -235,11 +235,12 @@ declare namespace Eris {
   // Emoji
   interface Emoji extends EmojiBase {
     animated: boolean;
+    available: boolean;
     id: string;
     managed: boolean;
     require_colons: boolean;
     roles: string[];
-    user: PartialUser;
+    user?: PartialUser;
   }
   interface EmojiBase {
     icon?: string;
@@ -348,7 +349,7 @@ declare namespace Eris {
     (event: "guildMemberRemove", listener: (guild: Guild, member: Member | MemberPartial) => void): T;
     (
       event: "guildMemberUpdate",
-      listener: (guild: Guild, member: Member, oldMember: { nick?: string; premiumSince: number; roles: string[] } | null) => void
+      listener: (guild: Guild, member: Member, oldMember: { nick?: string; premiumSince: number; roles: string[]; pending?: boolean; user: PartialUser | null } | null) => void
     ): T;
     (event: "guildRoleCreate" | "guildRoleDelete", listener: (guild: Guild, role: Role) => void): T;
     (event: "guildRoleUpdate", listener: (guild: Guild, role: Role, oldRole: OldRole) => void): T;
@@ -457,7 +458,9 @@ declare namespace Eris {
   }
   interface GuildAuditLog {
     entries: GuildAuditLogEntry[];
+    integrations: GuildIntegration[];
     users: User[];
+    webhooks: Webhook;
   }
   interface GuildOptions {
     afkChannelID?: string;
@@ -577,7 +580,7 @@ declare namespace Eris {
     everyone?: boolean;
     roles?: boolean | string[];
     users?: boolean | string[];
-    replied_user?: boolean;
+    repliedUser?: boolean;
   }
   interface Attachment {
     filename: string;
@@ -585,6 +588,8 @@ declare namespace Eris {
     proxy_url: string;
     size: number;
     url: string;
+    height?: number;
+    width?: number;
   }
   interface MessageActivity {
     party_id?: string;
@@ -1015,6 +1020,7 @@ declare namespace Eris {
   }
 
   export class Client extends EventEmitter {
+    application?: { id: string; flags: number };
     bot?: boolean;
     channelGuildMap: { [s: string]: string };
     gatewayURL?: string;
@@ -1035,9 +1041,9 @@ declare namespace Eris {
     constructor(token: string, options?: ClientOptions);
     acceptInvite(inviteID: string): Promise<Invite & InviteWithoutMetadata<null>>;
     addGuildMemberRole(guildID: string, memberID: string, roleID: string, reason?: string): Promise<void>;
+    addMessageReaction(channelID: string, messageID: string, reaction: string): Promise<void>;
     /** @deprecated */
     addMessageReaction(channelID: string, messageID: string, reaction: string, userID: string): Promise<void>;
-    addMessageReaction(channelID: string, messageID: string, reaction: string): Promise<void>;
     banGuildMember(guildID: string, userID: string, deleteMessageDays?: number, reason?: string): Promise<void>;
     closeVoiceConnection(guildID: string): void;
     connect(): Promise<void>;
@@ -1249,7 +1255,6 @@ declare namespace Eris {
       reason?: string
     ): Promise<number>;
     removeGuildMemberRole(guildID: string, memberID: string, roleID: string, reason?: string): Promise<void>;
-    /** @deprecated */
     removeMessageReaction(channelID: string, messageID: string, reaction: string, userID: string): Promise<void>;
     removeMessageReaction(channelID: string, messageID: string, reaction: string): Promise<void>;
     removeMessageReactionEmoji(channelID: string, messageID: string, reaction: string): Promise<void>;
@@ -1529,6 +1534,7 @@ declare namespace Eris {
     joinedAt: number;
     mention: string;
     nick: string | null;
+    pending?: boolean;
     /** @deprecated */
     permission: Permission;
     permissions: Permission;
@@ -1563,10 +1569,10 @@ declare namespace Eris {
     editedTimestamp?: number;
     embeds: Embed[];
     flags: number;
-    guildID?: string;
+    guildID: T extends GuildTextable ? string : undefined;
     id: string;
     jumpLink: string;
-    member: Member | null;
+    member: T extends GuildTextable ? Member : null;
     mentionEveryone: boolean;
     mentions: User[];
     messageReference: MessageReference | null;
@@ -1580,14 +1586,11 @@ declare namespace Eris {
     type: number;
     webhookID?: string;
     constructor(data: BaseData, client: Client);
-    /** @deprecated */
-    addReaction(reaction: string, userID: string): Promise<void>;
     addReaction(reaction: string): Promise<void>;
     crosspost(): T extends NewsChannel ? Promise<Message<NewsChannel>> : never;
     delete(reason?: string): Promise<void>;
     edit(content: MessageContent): Promise<Message<T>>;
     getReaction(reaction: string, limit?: number, before?: string, after?: string): Promise<User[]>;
-    /** @deprecated */
     removeReaction(reaction: string, userID: string): Promise<void>;
     removeReaction(reaction: string): Promise<void>;
     removeReactionEmoji(reaction: string): Promise<void>;
@@ -1649,8 +1652,6 @@ declare namespace Eris {
     messages: Collection<Message<PrivateChannel>>;
     recipient: User;
     type: 1 | 3;
-    /** @deprecated */
-    addMessageReaction(messageID: string, reaction: string, userID: string): Promise<void>;
     addMessageReaction(messageID: string, reaction: string): Promise<void>;
     createMessage(content: MessageContent, file?: MessageFile | MessageFile[]): Promise<Message<PrivateChannel>>;
     deleteMessage(messageID: string, reason?: string): Promise<void>;
@@ -1665,7 +1666,6 @@ declare namespace Eris {
     ): Promise<User[]>;
     getMessages(limit?: number, before?: string, after?: string, around?: string): Promise<Message<PrivateChannel>[]>;
     leave(): Promise<void>;
-    /** @deprecated */
     removeMessageReaction(messageID: string, reaction: string, userID: string): Promise<void>;
     removeMessageReaction(messageID: string, reaction: string): Promise<void>;
   }
@@ -1690,11 +1690,13 @@ declare namespace Eris {
   }
 
   export class Role extends Base {
+    botID?: string
     color: number;
     createdAt: number;
     guild: Guild;
     hoist: boolean;
     id: string;
+    integrationID?: string;
     json: Partial<Record<Exclude<keyof Constants["Permissions"], "all" | "allGuild" | "allText" | "allVoice">, boolean>>;
     managed: boolean;
     mention: string;
@@ -1702,6 +1704,7 @@ declare namespace Eris {
     name: string;
     permissions: Permission;
     position: number;
+    premiumSubscriber: boolean;
     constructor(data: BaseData, guild: Guild);
     delete(reason?: string): Promise<void>;
     edit(options: RoleOptions, reason?: string): Promise<Role>;
@@ -1804,8 +1807,6 @@ declare namespace Eris {
     topic: string | null;
     type: 0 | 5;
     constructor(data: BaseData, guild: Guild, messageLimit: number);
-    /** @deprecated */
-    addMessageReaction(messageID: string, reaction: string, userID: string): Promise<void>;
     addMessageReaction(messageID: string, reaction: string): Promise<void>;
     createInvite(options?: CreateInviteOptions, reason?: string): Promise<Invite & InviteWithoutMetadata<null, TextChannel>>;
     createMessage(content: MessageContent, file?: MessageFile | MessageFile[]): Promise<Message<TextChannel>>;
@@ -1826,7 +1827,6 @@ declare namespace Eris {
     getMessages(limit?: number, before?: string, after?: string, around?: string): Promise<Message<TextChannel>[]>;
     getWebhooks(): Promise<Webhook[]>;
     purge(limit: number, filter?: (message: Message<TextChannel>) => boolean, before?: string, after?: string, reason?: string): Promise<number>;
-    /** @deprecated */
     removeMessageReaction(messageID: string, reaction: string, userID: string): Promise<void>;
     removeMessageReaction(messageID: string, reaction: string): Promise<void>;
     removeMessageReactionEmoji(messageID: string, reaction: string): Promise<void>;
